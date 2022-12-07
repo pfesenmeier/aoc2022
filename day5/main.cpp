@@ -64,7 +64,6 @@ int main() {
         }
     }
 
-
     // parse moves
     vector<vector<int>> moves;
     for (auto line: lines) {
@@ -113,14 +112,35 @@ int main() {
         }
     }
 
-    // execute moves
+//    execute moves -- part 1
+//    for (auto move: moves) {
+//        for (auto i = 0; i < move[0]; i++) {
+//            auto from_stack = &stacks[move[1] - 1];
+//            auto to_stack = &stacks[move[2] - 1];
+//            auto box = from_stack->back();
+//            to_stack->push_back(box);
+//            from_stack->pop_back();
+//        }
+//    }
+
+//     execute moves -- part 2
     for (auto move: moves) {
-        for (auto i = 0; i < move[0]; i++) {
-            auto from_stack = &stacks[move[1] - 1];
-            auto to_stack = &stacks[move[2] - 1];
+        auto from_stack = &stacks[move[1] - 1];
+        auto to_stack = &stacks[move[2] - 1];
+        auto num_boxes = move[0];
+
+        list<char> buffer;
+        for (auto i = 0; i < num_boxes; i++) {
             auto box = from_stack->back();
-            to_stack->push_back(box);
+            buffer.push_back(box);
             from_stack->pop_back();
+        }
+
+        for (auto i = 0; i < num_boxes; i++) {
+            auto box = buffer.back();
+            to_stack->push_back(box);
+
+            buffer.pop_back();
         }
     }
 

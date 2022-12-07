@@ -3,7 +3,6 @@
 #include <string_view>
 #include "Sample.h"
 
-
 int main () {
   std::string_view good{"a string literal"};
 

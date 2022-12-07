@@ -31,20 +31,18 @@ void printv(auto foo) {
 }
 
 int part1_iter(string buffer) {
+    namespace views = std::views;
+    namespace ranges = std::ranges;
+    using std::back_inserter;
+
     const int PCKT_LEN = 4;
 
     // index = 0
     int index = 0;
     // drop view index
-    while (true) {
-        namespace views = std::views;
-        namespace ranges = std::ranges;
-        using std::back_inserter;
-
-        auto next_four = buffer | views::drop(index);
-
+    for(auto window : buffer | views::slide(PCKT_LEN) ) {
         string next_four_copy;
-        ranges::copy_n(next_four.begin(), PCKT_LEN, back_inserter(next_four_copy));
+        ranges::copy_n(window.begin(), PCKT_LEN, back_inserter(next_four_copy));
 
         ranges::sort(next_four_copy);
 
