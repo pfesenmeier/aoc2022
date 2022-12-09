@@ -70,7 +70,19 @@
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/pfese/aoc2022/day7/dir.cpp">
+			<Option target="day7"/>
+		</Unit>
+		<Unit filename="/home/pfese/aoc2022/day7/dir.h">
+			<Option target="day7"/>
+		</Unit>
 		<Unit filename="/home/pfese/aoc2022/day7/main.cpp">
+			<Option target="day7"/>
+		</Unit>
+		<Unit filename="/home/pfese/aoc2022/day7/parse.cpp">
+			<Option target="day7"/>
+		</Unit>
+		<Unit filename="/home/pfese/aoc2022/day7/parse.h">
 			<Option target="day7"/>
 		</Unit>
 		<Unit filename="/home/pfese/aoc2022/day7/CMakeLists.txt">

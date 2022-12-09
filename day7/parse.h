@@ -6,9 +6,7 @@
 #define DAY7_PARSE_H
 
 
-class parse {
 
-};
 
 
 #endif //DAY7_PARSE_H

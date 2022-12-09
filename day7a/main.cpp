@@ -9,11 +9,13 @@
 
 using namespace std;
 
+class dir;
 
 class file {
 public:
     explicit file(string name) : name(std::move(name)) {}
 
+    dir* parent;
     string name;
 };
 
@@ -23,6 +25,7 @@ public:
 
     string name;
     vector<shared_ptr<variant<dir, file>>> contents;
+    dir* parent;
 
     void add(variant<dir, file> node) {
         contents.push_back(move(make_unique<variant<dir, file>>(move(node))));
@@ -92,10 +95,8 @@ auto make_tree() {
 
     for (auto line: lines | std::views::drop(1) | std::views::filter(skip_ls)) {
         if (line == GO_BACK) {
-            continue;
-        }
-
-        if (line.starts_with(CD_CMD)) {
+            cwd = cwd->parent;
+        } else if (line.starts_with(CD_CMD)) {
             auto folder_name = line.substr(CD_CMD.length());
 
             for (auto c : cwd->contents) {
@@ -105,6 +106,11 @@ auto make_tree() {
             }
         } else {
             auto node = parse_line(line);
+            if (holds_alternative<file>(node)) {
+                get<file>(node).parent = cwd;
+            } else {
+                get<dir>(node).parent = cwd;
+            }
 
             cwd->contents.push_back(move(make_unique<variant<dir,file>>(move(node))));
         }

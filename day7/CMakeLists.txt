@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories(/home/pfese/aoc2022/aoc_lib/)
 
 #link_directories(/home/pfese/aoc2022/aoc_lib/)
-add_executable(day7 main.cpp)
+add_executable(day7 main.cpp dir.cpp dir.h parse.cpp parse.h)
 
 # libaoc_lib.so
 find_library(AOC_LIB libaoc_lib /home/pfese/aoc2022/aoc_lib/cmake-build-debug/)
