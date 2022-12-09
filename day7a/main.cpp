@@ -8,6 +8,8 @@
 #include <ranges>
 
 const int MAX = 100000;
+const int TOTAL_SPACE = 70000000;
+const int FREE_NEEDED = 30000000;
 
 using namespace std;
 
@@ -17,7 +19,7 @@ class file {
 public:
     explicit file(string name, int size) : name(std::move(name)), size(size) {}
 
-    dir* parent;
+    dir *parent;
     string name;
     int size;
 };
@@ -28,7 +30,7 @@ public:
 
     string name;
     vector<shared_ptr<variant<dir, file>>> contents;
-    dir* parent;
+    dir *parent;
     int size;
 
     void add(variant<dir, file> node) {
@@ -42,7 +44,7 @@ public:
     void print_recurse(int depth = 0) {
         auto space = string(4 * depth, ' ');
         cout << space << name << '/' << " (" << size << ")" << endl;
-        for (auto&& c: contents) {
+        for (auto &&c: contents) {
             if (holds_alternative<file>(*c)) {
                 cout << space << "    " << get<file>(*c).name;
                 cout << " (" << get<file>(*c).size << ")" << endl;
@@ -53,7 +55,8 @@ public:
     }
 };
 
-int get_size(dir& d, int& answer) {
+// part 1
+int get_size(dir &d, int &answer) {
     int size = 0;
     for (auto c: d.contents) {
         if (holds_alternative<file>(*c)) {
@@ -66,6 +69,7 @@ int get_size(dir& d, int& answer) {
     }
     d.size = size;
 
+    // part 1
     if (size < MAX) {
         answer += size;
     }
@@ -73,12 +77,33 @@ int get_size(dir& d, int& answer) {
     return size;
 };
 
-void fail (string msg){
+// part 2
+int get_size2(dir &d, int& answer, int& needed) {
+    int size = 0;
+    for (auto c: d.contents) {
+        if (holds_alternative<file>(*c)) {
+            size += get<file>(*c).size;
+        }
+
+        if (holds_alternative<dir>(*c)) {
+            size += get_size2(get<dir>(*c), answer, needed);
+        }
+    }
+    d.size = size;
+
+    if (size > needed && size < answer) {
+        answer = size;
+    }
+
+    return size;
+};
+
+void fail(string msg) {
     cout << msg << endl;
     exit(1);
 };
 
-variant <dir, file> parse_line(string line) {
+variant<dir, file> parse_line(string line) {
     int space_pos = line.find(' ');
     std::string name = line.substr(space_pos + 1);
 
@@ -92,12 +117,12 @@ variant <dir, file> parse_line(string line) {
 
 vector<string> open() {
     const string path = "../input.txt";
-    ifstream input { path };
+    ifstream input{path};
     if (!input.is_open()) fail("could not open: " + path);
 
     vector<string> lines;
 
-    for(string line; getline(input, line);) {
+    for (string line; getline(input, line);) {
         lines.push_back(line);
     }
 
@@ -108,7 +133,7 @@ auto make_tree() {
     auto lines = open();
 
     dir home{""};
-    dir* cwd = &home;
+    dir *cwd = &home;
 
     // skip initial "cd / "
     auto skip_ls = [](const string &line) { return line != "$ ls"; };
@@ -121,9 +146,9 @@ auto make_tree() {
         } else if (line.starts_with(CD_CMD)) {
             auto folder_name = line.substr(CD_CMD.length());
 
-            for (auto c : cwd->contents) {
+            for (auto c: cwd->contents) {
                 if (std::holds_alternative<dir>(*c) && get<dir>(*c).name == folder_name) {
-                    cwd = reinterpret_cast<dir*>(c.get());
+                    cwd = reinterpret_cast<dir *>(c.get());
                 }
             }
         } else {
@@ -134,7 +159,7 @@ auto make_tree() {
                 get<dir>(node).parent = cwd;
             }
 
-            cwd->contents.push_back(move(make_unique<variant<dir,file>>(move(node))));
+            cwd->contents.push_back(move(make_unique<variant<dir, file>>(move(node))));
         }
 
     }
@@ -148,16 +173,22 @@ auto make_tree() {
     };
 
     int answer = 0;
+
+    // part1
     get_size(home, answer);
-//    int answer = 0;
-//    for(auto child: cwd->contents) {
-//        if (holds_alternative<dir>(*child)) {
-//            auto size = get_size(get<dir>(*child));
-//            get<dir>(*child).size = size;
-//        }
-//    }
+
+    int used_space = home.size;
+    int free_space = TOTAL_SPACE - used_space;
+    int min_to_delete = FREE_NEEDED - free_space;
 
     home.print();
+
+    cout << "Space needed: " << min_to_delete << endl;
+
+    answer = INT_MAX;
+
+    get_size2(home, answer, min_to_delete);
+
     cout << "Answer: " << answer << endl;
 }
 
