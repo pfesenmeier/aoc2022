@@ -134,28 +134,14 @@ class crt {
         cout << endl;
     }
 
-    bool is_visible(coord c) {
-        if (c.row >= pixels.size()) {
-            cout << "Warning: did not print because row " << c.row << " does not exist" << endl;
-            return false;
-        }
-        if (c.col >= pixels.at(0).size()) {
-            cout << "Warning: did not print because column " << c.col << " does not exist" << endl;
-            return false;
-        }
-        return true;
-    }
-
 public:
     crt() : pixels() {}
 
     void draw(int cycle, int regX) {
         screen_state s{cycle, regX};
 
-        if (is_visible(s.get_coord())) {
-            push(s.get_coord(), s.on_sprite());
-            print();
-        }
+        push(s.get_coord(), s.on_sprite());
+        print();
     }
 };
 
@@ -210,7 +196,7 @@ public:
     circuit(auto stack) : stack(stack), detector(), tube() {}
 
     void print_answer_pt1() {
-        cout << "Answer: " << std::to_string(detector.get()) << endl;
+        cout << "Answer part 1: " << std::to_string(detector.get()) << endl;
     }
 
     bool cycle() {
