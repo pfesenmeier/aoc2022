@@ -30,11 +30,7 @@ public:
     bool execute() {
         duration--;
 
-        if (duration == 0) {
-            return true;
-        }
-
-        return false;
+        return duration == 0;
     }
 
     int get() {
@@ -42,9 +38,11 @@ public:
     }
 
     string to_string() {
+        // bug if line ever "addx 0"
         if (value == 0) {
             return NOOP;
         }
+
         return ADDX + " " + std::to_string(value);
     }
 
@@ -96,13 +94,15 @@ class screen_state {
 public:
     screen_state(int cycle, int regX) : regX(regX), cycle(cycle) {}
 
-    coord get_coord() {
+    [[nodiscard]]
+    coord get_coord() const {
         int row = (cycle - 1) / 40;
         int col = (cycle - 1) % 40;
-        return coord(row, col);
+        return {row, col};
     }
 
-    bool on_sprite() {
+    [[nodiscard]]
+    bool on_sprite() const {
         int col = (cycle - 1) % 40;
         int max = regX + 1;
         int min = regX - 1;
@@ -113,12 +113,13 @@ public:
 class crt {
     array<array<bool, 40>, 6> pixels;
 
-    char print_c(bool on_sprite) {
+    static char print_c(bool on_sprite) {
         return on_sprite ? '#' : '_';
     }
 
     void push(coord loc, bool on_sprite) {
-        cout << "Adding '" << print_c(on_sprite) << "' in row " << to_string(loc.row) << ", col " << to_string(loc.col) << endl;
+        cout << "Adding '" << print_c(on_sprite) << "' in row " << to_string(loc.row) << ", col " << to_string(loc.col)
+             << endl;
         pixels.at(loc.row).at(loc.col) = on_sprite;
     }
 
@@ -151,13 +152,12 @@ public:
     void draw(int cycle, int regX) {
         screen_state s{cycle, regX};
 
-        if(is_visible(s.get_coord())) {
+        if (is_visible(s.get_coord())) {
             push(s.get_coord(), s.on_sprite());
             print();
         }
     }
 };
-
 
 class circuit {
     list<signal> stack;
@@ -209,7 +209,7 @@ class circuit {
 public:
     circuit(auto stack) : stack(stack), detector(), tube() {}
 
-    void print_answer() {
+    void print_answer_pt1() {
         cout << "Answer: " << std::to_string(detector.get()) << endl;
     }
 
@@ -244,17 +244,22 @@ auto open() {
     return lines;
 }
 
-void part1() {
+void run() {
     circuit c{open()};
 
     while (c.cycle()) {}
-    c.print_answer();
+    c.print_answer_pt1();
 }
 
 int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        cout << "Usage: ./day10 FILE" << endl;
+        exit(1);
+    }
+
     PATH = argv[1];
 
-    part1();
+    run();
 
     return 0;
 }
