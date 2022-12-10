@@ -22,6 +22,8 @@ struct cmd {
 struct pos {
     pos(int x, int y) : x(x), y(y) {}
 
+    ~pos() {}
+
     int x;
     int y;
 
@@ -35,53 +37,62 @@ struct pos {
     }
 };
 
-class rope {
-    pos H = pos(0, 0);
-    pos T = pos(0, 0);
+struct link {
+    link(pos &first, pos &second) : first(first), second(second) {}
+
+    pos &first;
+    pos &second;
 
     bool dx(int dist) {
-        if (dist == 0) {
-            return H.x == T.x;
-        }
-        return H.x == T.x + dist;
+        return first.x == second.x + dist;
     };
 
     bool dy(int dist) {
-        if (dist == 0) {
-            return H.y == T.y;
-        }
-        return H.y == T.y + dist;
+        return first.y == second.y + dist;
     };
+};
 
-    bool nnn() { return dx(+0) && dy(+2); };
+class rope {
+    pos H = pos(0, 0);
+    vector<pos> T;
 
-    bool nne() { return dx(+1) && dy(+2); };
+    static bool nnn(link l) { return l.dx(+0) && l.dy(+2); };
 
-    bool ene() { return dx(+2) && dy(+1); };
+    static bool nne(link l) { return l.dx(+1) && l.dy(+2); };
 
-    bool eee() { return dx(+2) && dy(+0); };
+    static bool ne(link l) { return l.dx(+2) && l.dy(+2); };
 
-    bool ese() { return dx(+2) && dy(-1); };
+    static bool ene(link l) { return l.dx(+2) && l.dy(+1); };
 
-    bool sse() { return dx(+1) && dy(-2); };
+    static bool eee(link l) { return l.dx(+2) && l.dy(+0); };
 
-    bool sss() { return dx(+0) && dy(-2); };
+    static bool ese(link l) { return l.dx(+2) && l.dy(-1); };
 
-    bool ssw() { return dx(-1) && dy(-2); };
+    static bool se(link l) { return l.dx(+2) && l.dy(-2); };
 
-    bool wsw() { return dx(-2) && dy(-1); };
+    static bool sse(link l) { return l.dx(+1) && l.dy(-2); };
 
-    bool www() { return dx(-2) && dy(0); };
+    static bool sss(link l) { return l.dx(+0) && l.dy(-2); };
 
-    bool wnw() { return dx(-2) && dy(+1); };
+    static bool ssw(link l) { return l.dx(-1) && l.dy(-2); };
 
-    bool nnw() { return dx(-1) && dy(+2); };
+    static bool sw(link l) { return l.dx(-2) && l.dy(-2); };
 
-    bool ccc() { return dx(+0) && dy(+0); };
+    static bool wsw(link l) { return l.dx(-2) && l.dy(-1); };
 
-    void change_T(int x, int y) {
-        T.x += x;
-        T.y += y;
+    static bool www(link l) { return l.dx(-2) && l.dy(0); };
+
+    static bool wnw(link l) { return l.dx(-2) && l.dy(+1); };
+
+    static bool nw(link l) { return l.dx(-2) && l.dy(+2); };
+
+    static bool nnw(link l) { return l.dx(-1) && l.dy(+2); };
+
+    static bool ccc(link l) { return l.dx(+0) && l.dy(+0); };
+
+    void change_T(pos &p, int x, int y) {
+        p.x += x;
+        p.y += y;
     }
 
     void change_H(int x, int y) {
@@ -89,24 +100,45 @@ class rope {
         H.y += y;
     }
 
+    void scrunch(link &l) {
+        if (nnn(l)) change_T(l.second, 0, 1);
+        if (nne(l)) change_T(l.second, 1, 1);
+        if (ne(l)) change_T(l.second, 1, 1);
+        if (ene(l)) change_T(l.second, 1, 1);
+        if (eee(l)) change_T(l.second, 1, 0);
+        if (ese(l)) change_T(l.second, 1, -1);
+        if (se(l)) change_T(l.second, 1, -1);
+        if (sse(l)) change_T(l.second, 1, -1);
+        if (sss(l)) change_T(l.second, 0, -1);
+        if (ssw(l)) change_T(l.second, -1, -1);
+        if (sw(l)) change_T(l.second, -1, -1);
+        if (wsw(l)) change_T(l.second, -1, -1);
+        if (www(l)) change_T(l.second, -1, 0);
+        if (wnw(l)) change_T(l.second, -1, 1);
+        if (nw(l)) change_T(l.second, -1, 1);
+        if (nnw(l)) change_T(l.second, -1, 1);
+        if (ccc(l)) change_T(l.second, 0, 0);
+    }
+
     void move_tail() {
-        if (nnn()) change_T(0, 1);
-        if (nne()) change_T(1, 1);
-        if (ene()) change_T(1, 1);
-        if (eee()) change_T(1, 0);
-        if (ese()) change_T(1, -1);
-        if (sse()) change_T(1, -1);
-        if (sss()) change_T(0, -1);
-        if (ssw()) change_T(-1, -1);
-        if (wsw()) change_T(-1, -1);
-        if (www()) change_T(-1, 0);
-        if (wnw()) change_T(-1, 1);
-        if (nnw()) change_T(-1, 1);
-        if (ccc()) change_T(0, 0);
+        link neck{H, T[0]};
+        scrunch(neck);
+
+        int size = T.size() - 1;
+        for (int i: views::iota(0, size)) {
+            link l{T[i], T[i + 1]};
+            scrunch(l);
+        }
     };
 
 public:
-    rope(int x, int y) : H(x, y), T(x, y) {}
+    int len;
+
+    rope(pos initial, int length) : H(initial.x, initial.y), T(), len(length) {
+        for (auto i: views::iota(0, length - 1)) {
+            T.emplace_back(pos(initial.x, initial.y));
+        }
+    }
 
     void left() {
         change_H(-1, 0);
@@ -132,20 +164,18 @@ public:
         return H.get();
     }
 
-    tuple<int, int> tail() {
-        return T.get();
+    tuple<int, int> tail(int name) {
+        return T.at(name - 1).get();
     }
 };
 
 class grid {
     map<tuple<int, int>, bool> g;
-    int x = 0;
-    int y = 0;
     pos start;
 public:
     rope r;
 
-    grid(int x, int y) : g(), r(x, y), start(x, y) {}
+    grid(pos initial, int length) : g(), r(initial, length), start(initial.x, initial.y) {}
 
     void exec(cmd c) {
         c.print();
@@ -164,7 +194,8 @@ public:
                     r.down();
                     break;
             }
-            g[r.tail()] = true;
+            g[r.tail(r.len - 1)] = true;
+
             print();
         }
 
@@ -180,22 +211,30 @@ public:
     }
 
     void print() {
-        auto t = r.tail();
         auto h = r.head();
         for (auto i = 0; i > -5; i--) {
             for (auto j: views::iota(0, 6)) {
                 if (tie(j, i) == h) {
                     cout << 'H';
-                } else if (tie(j, i) == t) {
-                    cout << 'T';
-                } else if (tie(j, i) == start.get()) {
+                    continue;
+                }
+
+                for (auto k = 1; k < r.len; k++) {
+                    auto t = r.tail(k);
+                    if (tie(j, i) == t) {
+                        cout << k;
+                        goto cont;
+                    }
+                }
+
+                if (tie(j, i) == start.get()) {
                     cout << 's';
                 } else if (g[tie(j, i)]) {
                     cout << '#';
                 } else {
                     cout << '_';
-
                 }
+                cont:;
             }
             cout << endl;
         }
@@ -221,7 +260,7 @@ vector<cmd> open(bool test) {
 
 void part1() {
     auto cmds = open(false);
-    auto g = grid(0, -4);
+    auto g = grid(pos(0, -4), 10);
 
     g.print();
     for (auto cmd: cmds) {
@@ -244,36 +283,36 @@ void expect(tuple<int, int> p, int x, int y) {
 }
 
 void test1() {
-    auto g = grid(0, -4);
+    auto g = grid(pos(0, -4), 10);
 
     g.print();
 
     g.exec(cmd('R', 4));
-    expect(g.r.tail(), 3, -4);
+    expect(g.r.tail(1), 3, -4);
 
     g.exec(cmd('U', 4));
-    expect(g.r.tail(), 4, -1);
+    expect(g.r.tail(1), 4, -1);
 
     g.exec(cmd('L', 3));
-    expect(g.r.tail(), 2, 0);
+    expect(g.r.tail(1), 2, 0);
 
     g.exec(cmd('D', 1));
-    expect(g.r.tail(), 2, 0);
+    expect(g.r.tail(1), 2, 0);
 
     g.exec(cmd('R', 4));
-    expect(g.r.tail(), 4, -1);
+    expect(g.r.tail(1), 4, -1);
 
     g.exec(cmd('D', 1));
-    expect(g.r.tail(), 4, -1);
+    expect(g.r.tail(1), 4, -1);
 
     g.exec(cmd('L', 5));
-    expect(g.r.tail(), 1, -2);
+    expect(g.r.tail(1), 1, -2);
 
     g.exec(cmd('R', 2));
-    expect(g.r.tail(), 1, -2);
+    expect(g.r.tail(1), 1, -2);
 }
 
 int main() {
 //    test1();
-   part1();
+    part1();
 }
